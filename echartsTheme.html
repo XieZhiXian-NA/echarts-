@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@4.8.0/dist/echarts.js"></script>
+    <script src="./js/vintage.js"></script>
+    <style>
+        #chart{
+            width: 800px;
+            height: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chart" ></div>
+    <script>
+        const charDom = document.getElementById('chart')
+        const chart = echarts.init(charDom,'vintage',{renderer:'svg'}) //生成的一个全局的echarts对象
+        chart.setOption({
+            title:{
+                text:"Echarts入门案例"
+            },
+            xAxis:{
+                data:['食品','数码','服饰','箱包']
+            },
+            yAxis:{},
+            series:[{
+                type:"bar",
+                data:['1024','200','400']
+
+            }]
+        })
+    
+    </script>
+</body>
+</html>

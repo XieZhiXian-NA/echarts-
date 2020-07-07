@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=uVo9NXxwYrugBN7lGxWWY0K3MsPw8Nc9"></script>
+     <script src="https://mapv.baidu.com/gl/examples/static/common.js"></script>
+     <script src="https://mapv.baidu.com/build/mapv.js"></script>
+     <script src="https://code.bdstatic.com/npm/mapvgl@1.0.0-beta.54/dist/mapvgl.min.js"></script>
+   <style>
+        html,body,#map_container{
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .anchorBL,.BMap_cpyCtrl{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="map_container">
+
+    </div>
+    <script>
+        
+         var map = initMaps()
+         var data = initData()
+         setData(map,data)
+            // // 初始化地图 拿到地图实例
+            // var map = new BMapGL.Map('map')
+            // //展示的中心点
+            // var point = new BMapGL.Point(121.657614,31.324317)
+            // //显示的级别
+            // map.centerAndZoom(point,10)
+            // map.enableScrollWheelZoom(true)
+            // 官方提供的通用的初始化地图的方法 
+            function initMaps(){
+                var map = initMap({
+                tilt:0,
+                center:[121.657614,31.324317],
+                zoom:10,
+                style:snowStyle
+               })
+               return map
+            }
+            
+            function initData(){
+                var cities = ['北京', '天津', '上海', '重庆', '石家庄', '太原', '呼和浩特', '哈尔滨', '长春',
+				'沈阳', '济南', '南京', '合肥', '杭州', '南昌', '福州', '郑州', '武汉', '长沙', '广州',
+				'南宁', '西安', '银川', '兰州', '西宁', '乌鲁木齐', '成都', '贵阳', '昆明', '拉萨', '海口']
+                
+                 //1.准备数据源
+                var data = []
+                var random = 700
+                while(random--){
+                    var cityCenter = mapv.utilCityCenter.getCenterByCityName(cities[parseInt(Math.random()*cities.length)])
+                    data.push({
+                    //地理信息，位置坐标
+                    geometry:{type:'Point',coordinates:[cityCenter.lng-2+Math.random()*4,cityCenter.lat-2+Math.random()*4]},
+                    properties:{
+                        sales:Math.random()*100
+                    }
+                   })
+                }
+             
+                return data
+            }
+
+            function setData(map,data){
+                // 绘制
+                // 1.生成mapvgl 视图 View 这些图并不是直接生成在map地图上，另外有个图层 
+                var view = new mapvgl.View({map})
+                // 2.初始化 Intensity 对象 控制绘制的点的颜色 大小
+                var intensity = new mapvgl.Intensity({
+                    min:0,// 当前data数据的最大值
+                    max:100,// 当前data数据的最小值
+                    minSize:5, // 想要的点的最小值
+                    maxSize:30, // 想要的点的最大值
+                    gradient:{
+                        0: 'rgb(25, 66, 102, 0.8)',
+                        0.3: 'rgb(145, 102, 129, 0.8)',
+                        0.7: 'rgb(210, 131, 137, 0.8)',
+                        1: 'rgb(248, 177, 149, 0.8)'
+                    }
+
+                })
+                // 3.初始化 mapvgl的PointLayer对象 散点 
+                var pointLayer = new mapvgl.PointLayer({
+                    //根据value值 绘制大小颜色不一样的点
+                    size:function(data){
+                        return intensity.getSize(data.properties.sales)
+                    },
+                    color:function(data){
+                        return intensity.getColor(data.properties.sales)
+                    }
+                })
+                // 4.将PointLayer对象加入View对象中
+                view.addLayer(pointLayer)
+                // 5.将data与PointLayer对象绑定
+                pointLayer.setData(data)
+            }
+           
+            
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=uVo9NXxwYrugBN7lGxWWY0K3MsPw8Nc9"></script> -->
+    <style>
+        html,body,#map{
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .anchorBL,.BMap_cpyCtrl{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="map">
+
+    </div>
+    <script>
+        
+        function init(){
+            // 初始化地图 拿到地图实例
+            var map = new BMapGL.Map('map')
+            //展示的中心点
+            var point = new BMapGL.Point(116.404,39.915)
+            //显示的级别
+            map.centerAndZoom(point,10)
+            map.enableScrollWheelZoom(true)
+        }
+
+        window.onload = function(){
+            var script = document.createElement('script')
+            script.src =  'https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=uVo9NXxwYrugBN7lGxWWY0K3MsPw8Nc9&callback=init'
+            document.body.appendChild(script)
+        }
+
+        
+    </script>
+</body>
+</html>
