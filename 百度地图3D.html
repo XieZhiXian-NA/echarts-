@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=uVo9NXxwYrugBN7lGxWWY0K3MsPw8Nc9"></script>
+    <style>
+        html,body,#map{
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .anchorBL,.BMap_cpyCtrl{
+            display: none;
+        }
+        .BMap_stdMpZoom{
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- <script>
+        // 3D地图
+         // 初始化地图 拿到地图实例
+        var map = new BMapGL.Map('map')
+        //展示的中心点
+        var point = new BMapGL.Point(116.333374,40.009645)
+        //显示的级别
+        map.centerAndZoom(point,18)
+        map.enableScrollWheelZoom(true)
+        var heading = 0
+        map.setHeading(heading)
+        map.setTilt(70)
+        // setInterval(()=>{
+        //   heading++
+        //   map.setHeading(heading)
+        // },500)
+    </script>  -->
+
+    <script>
+        //3D地球
+        var map = new BMapGL.Map('map',{
+            minZoom:8,
+            maxZoom:10,
+
+        })
+        //展示的中心点
+        var point = new BMapGL.Point(116.333374,40.009645)
+        //显示的级别
+        map.centerAndZoom(point,10)
+        map.enableScrollWheelZoom(true)
+
+        map.setMapStyleV2({
+            styleId:'c4873e1bff4f0d0759b869d58a633d27'
+        })
+
+        map.setHeading(0)
+        map.setTilt(0)
+        map.setMapType(BMAP_NORMAL_MAP)
+        var zoomCtrl = new BMapGL.ZoomControl({
+            anchor:BMAP_ANCHOR_TOP_LEFT,
+            offset:new BMapGL.Size(10,10)
+        })
+        map.addControl(zoomCtrl)
+       
+        map.addEventListener('zoomstart',function(){
+            console.log('start',map.getZoom())
+        })
+        map.addEventListener('zoomend',function(){
+            console.log('end',map.getZoom())
+        })
+
+        var scaleCtrl = new BMapGL.ScaleControl({
+            anchor:BMAP_ANCHOR_TOP_RIGHT,
+            offset:new BMapGL.Size(100,10)
+        })
+        map.addControl(scaleCtrl)
+
+
+        // 定义Icon对象
+        var myIcon = new BMapGL.Icon(
+            'https://www.youbaobao.xyz/datav-res/datav/location.png',
+             new BMapGL.Size(60,60),
+             {
+                
+             }
+        )
+        // 添加到地图上的任何标注都需要通过marker进行
+        var marker = new BMapGL.Marker(point,{
+            icon:myIcon
+        })
+        marker.addEventListener('click',function(){
+            // var content = '欢迎啊'
+            // var div = document.createElement('div')
+            // div.innerHTML = content 
+            // 上面的这个被直接转化为字符串对象，显示错误
+            var content = '<div style="color:red;">欢迎你们来到彩云之南</div>'
+            content+='<div style="color:green;font-weight:bold">百度地图弹窗有个坑</div>'
+            var infoWindow = new BMapGL.InfoWindow( //string | HTMLElement字符串
+                content,{
+                width:250,
+                height:100,
+                title:'说明',
+                offset:new BMapGL.Size(10,10)//相对于point位置
+            })
+            map.openInfoWindow(infoWindow,point) // 弹窗展示的位置
+        })
+        map.addOverlay(marker)
+
+
+        var polyline = new BMapGL.Polyline([
+            new BMapGL.Point(116.339,39.800),
+            new BMapGL.Point(116.405,39.820),    
+        ],{
+            strokeColor:'red',
+            strokeWeight:4,
+            strokeOpacity:0.5
+            
+        }
+        )
+        map.addOverlay(polyline)
+
+        
+        var poly = new BMapGL.Polygon([
+            new BMapGL.Point(116.339,39.800),
+            new BMapGL.Point(116.405,39.820),   
+            new BMapGL.Point(116.409,39.860),  
+            
+        ],{
+            strokeColor:'red',
+            strokeWeight:2,
+            fillColor:'blue'
+            
+            
+        }
+        )
+        map.addOverlay(poly)
+
+
+        var label = new BMapGL.Label('小米杨',{
+            position:point, //只有明确了位置点，配置偏移才起作用
+            offset:new BMapGL.Size(0,0)
+        })
+        label.setStyle({ //是一个css对象
+         width:'100px',
+         height:'100px',
+         background:'red',
+         color:'white'
+        })
+        label.addEventListener('click',function(e){
+             alert(e.target.content)
+        })
+        map.addOverlay(label)
+
+    </script>
+</body>
+</html>

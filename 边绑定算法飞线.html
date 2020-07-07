@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=uVo9NXxwYrugBN7lGxWWY0K3MsPw8Nc9"></script>
+     <script src="https://mapv.baidu.com/gl/examples/static/common.js"></script>
+     <script src="https://mapv.baidu.com/build/mapv.js"></script>
+     <script src="https://code.bdstatic.com/npm/mapvgl@1.0.0-beta.54/dist/mapvgl.min.js"></script>
+     <script src="https://code.bdstatic.com/npm/mapvgl@1.0.0-beta.54/dist/mapvgl.threelayers.min.js"></script>
+   <style>
+        html,body,#map_container{
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .anchorBL,.BMap_cpyCtrl{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="map_container">
+
+    </div>
+    <script>
+        
+         var map = initMaps()
+         var data = initData()
+         setData(map,data)
+            function initMaps(){
+                var map = initMap({
+                tilt:30,
+                center:[121.657614,31.324317],
+                zoom:6,
+                style:purpleStyle
+               })
+               return map
+            }
+            
+            function initData(){
+               var data = []
+               var targetCity = mapv.utilCityCenter.getCenterByCityName('北京')
+               var cities = ['北京','天津', '上海', '重庆', '石家庄', '太原', '呼和浩特', '哈尔滨', '长春',
+				'沈阳', '济南', '南京', '合肥', '杭州', '南昌', '福州', '郑州', '武汉', '长沙', '广州',
+                '南宁', '西安', '银川', '兰州', '西宁', '乌鲁木齐', '成都', '贵阳', '昆明', '拉萨', '海口']
+               var randomCount = 500
+               var curve = new mapvgl.BezierCurve()
+
+               var nodeData = [{x:targetCity.lng,y:targetCity.lat}] //散落的点 点与边的关系
+               var edgeData = [] //边 向target--->source的线
+               // 生成一个点，就有一条边与之对应
+               for(let i=0;i<randomCount;i++){
+                   var startCity = mapv.utilCityCenter.getCenterByCityName(cities[parseInt(Math.random()*cities.length)]) 
+                //    curve.setOptions({
+                //         start:[startCity.lng-5+10*Math.random(),startCity.lat-5+10*Math.random()],
+                //         end:[targetCity.lng,targetCity.lat]
+                //    }) 
+                //     var curveData = curve.getPoints()
+                //     data.push({
+                //         geometry:{
+                //             type:'LineString',
+                //             coordinates:curveData
+                //         }
+                //     })
+                nodeData.push({x:startCity.lng-5+10*Math.random(),y:startCity.lat-5+10*Math.random()})
+                edgeData.push({source:i+1,target:0})
+               }
+               
+               //边绑定算法，将很多条临近的边合并成一条进行汇聚
+               var bundling = mapv.utilForceEdgeBundling().nodes(nodeData).edges(edgeData)
+               var results = bundling()
+               // 得到需要绘制出来的边与点的关系
+               // 一条边会有多个点
+              
+               for(let i =0;i<results.length;i++){
+                   let line = results[i]
+                   let coordinates = []
+                   for(var j = 0;j<line.length;j++){
+                    coordinates.push([line[j].x,line[j].y])
+                  }   
+                  data.push({
+                        geometry:{
+                            type:'LineString',
+                            coordinates
+                        }
+                    })
+
+               }
+               return data
+            }
+
+            function setData(map,data){
+                // 绘制
+                // 1.生成mapvgl 视图 View 这些图并不是直接生成在map地图上，另外有个图层 
+                var view = new mapvgl.View({map})
+                var lineLayer = new mapvgl.LineLayer({
+                    color:'rgba(55,50,250,0.3)',
+                    width:3,
+                    blend:'lighter'
+                })
+                view.addLayer(lineLayer)
+                lineLayer.setData(data)
+                
+                var linePointLayer = new mapvgl.LinePointLayer({
+                    size:3,
+                    speed:10,
+                    color:'rgba(255,255,0,0.6)',
+                    blend:'lighter',//点交汇时的处理方式
+                    shapeType:mapvgl.LinePointLayer.SHAPE_TYPE_CIRCLE,
+                    animationType:mapvgl.LinePointLayer.ANIMATION_TYPE_SMOOTH
+                })
+                view.addLayer(linePointLayer)
+                //有多少条线就有多少个点 运动方向与线的方向是一致的
+                linePointLayer.setData(data)
+
+            }
+           
+            
+
+    </script>
+</body>
+</html>

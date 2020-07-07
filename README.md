@@ -2,6 +2,8 @@
 
 ![echarts](./echarts.jpg)
 
+![liquidfill](./liquidfill.jpg)
+
 canvas绘制的是一个在画布上绘制的图像 svg绘制的是dom对象
 WebGL 3D绘图协议，为canvas提供硬件3D加速渲染，可以借助系统显卡来在浏览器里更流畅的展示3D场景和模型，还能创建复杂的导航和数据视觉化。
 
@@ -361,3 +363,265 @@ echarts在大屏中的显示方式，在浏览器中，使用div+css建立多个
 
 <!-- 饼图中，默认半径是0-75% 是指画布中min(width, height)的最小值的75% -->
 radius:['40%', '60%'] //默认值是0-75%
+
+## 百度地图
+
+### html
+
+* 在对性能敏感的场景下 异步加载 加快首屏的渲染速度 
+
+script标签不做任何处理的话 默认是遇到script标签主进程就要去解析加载运行script，会导致首页渲染过慢
+当首页内容加载完成，再去进行地图的初始化工作
+
+``` js
+function init() {
+  // 初始化地图 拿到地图实例
+  var map = new BMapGL.Map('map')
+  //展示的中心点
+  var point = new BMapGL.Point(116.404, 39.915)
+  //显示的级别
+  map.centerAndZoom(point, 10)
+  map.enableScrollWheelZoom(true)
+}
+
+window.onload = function() {
+  var script = document.createElement('script')
+  script.src = 'https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=uVo9NXxwYrugBN7lGxWWY0K3MsPw8Nc9&callback=init'
+  document.body.appendChild(script)
+}
+```
+
+* 3D地图
+
+heading 控制地图的旋转角度
+tilt 俯角  
+
+* 3D地球
+
+map.setMapType(BMAP_EARTH_MAP)
+
+#### 控件
+
+实例化控件
+百度地图上添加控件实例
+
+1. 缩放控件
+
+``` js
+var zoomCtrl = new BMapGL.ZoomControl({
+  anchor: BMAP_ANCHOR_TOP_LEFT,
+  // 设置偏移 是相对于当前的位置进行偏移
+  offset: new BMapGL.Size(10, 10)
+})
+map.addControl(zoomCtrl)
+```
+
+当设置锚点的位置为左下角时，由于我们将百度地图的图标设置为了隐藏，会影响到这里的显示，需要手动将锚点的display:block 
+
+``` css
+  .anchorBL,
+  .BMap_cpyCtrl {
+    display: none;
+  }
+
+  .BMap_stdMpZoom {
+    display: block;
+  }
+```
+
+在设置控件的最大缩放与最小缩放时，只能使用MapOptions
+
+``` js
+var map = new BMapGL.Map('map', {
+  minZoom: 8,
+  maxZoom: 10,
+})
+3.0 移除了setMinZoom() setMaxZoom() 方法
+```
+
+监听控件的事件 map.addEventListener('zoomstart', function(){})在控件触发的起始执行回调
+
+#### 个性化地图
+
+``` js
+需要在地图的初始化完成之后map.centerAndZoom(point, 10) 调用
+map.setMapStyleV2({
+  styleId: 'c4873e1bff4f0d0759b869d58a633d27'
+  // styleJSON:
+})
+```
+
+#### 绘图 
+
+##### 绘制图标
+
+``` js
+// 定义Icon对象
+var myIcon = new BMapGL.Icon( //url,大小，参数
+  'https://www.youbaobao.xyz/datav-res/datav/location.png',
+  new BMapGL.Size(60, 60), {}
+)
+// 添加到地图上的任何标注都需要通过marker进行
+var marker = new BMapGL.Marker(point, {
+  icon: myIcon
+})
+map.addOverlay(marker)
+```
+
+##### 绘制线段
+
+``` js
+var polyline = new BMapGL.Polyline(
+  // 一组Point点的数组
+  [
+    new BMapGL.Point(116.339, 39.800),
+    new BMapGL.Point(116.405, 39.820),
+  ],
+  //线的样式
+  {
+    strokeColor: 'red',
+    strokeWeight: 4,
+    strokeOpacity: 0.5
+
+  })
+map.addOverlay(polyline)
+```
+
+##### 绘制文本
+
+``` js
+ var label = new BMapGL.Label('小米杨', {
+   position: point, //只有明确了位置点，配置偏移才起作用
+   offset: new BMapGL.Size(0, 0)
+ })
+ label.setStyle({ //是一个css对象,与写css一样，使用驼峰法
+   width: '100px',
+   height: '100px',
+   backgroundColor: 'red',
+   color: 'white'
+ })
+ label.addEventListener('click', function(e) {
+   alert(e.target.content)
+ })
+ map.addOverlay(label)
+```
+
+##### 绘制弹窗
+
+``` js
+// var content = '欢迎啊'
+// var div = document.createElement('div')
+// div.innerHTML = content 
+// 上面的这个被直接转化为字符串对象，显示错误
+var content = '<div style="color:red;">欢迎你们来到彩云之南</div>'
+content += '<div style="color:green;font-weight:bold">百度地图弹窗有个坑</div>'
+var infoWindow = new BMapGL.InfoWindow( //string | HTMLElement字符串
+  content, {
+    width: 250,
+    height: 100,
+    title: '说明',
+    offset: new BMapGL.Size(10, 10) //相对于point位置
+  })
+map.openInfoWindow(infoWindow, point) // 弹窗展示的位置
+```
+
+#### 动画
+
+百度地图添加按钮等元素
+
+默认在地图上会有一个蒙层，其z-index:9 需要给按钮等的样式添加一个z-index:10，这样按钮才能被点击
+
+将事件切为帧，去控制
+
+``` js
+var keyFrames = [{
+  center: new BMapGL.Point(116.404, 39.915), //这帧动画的中心点的坐标
+  zoom: 21, //地图的级别 在两个帧之间产生镜头的拉伸，远近景
+  tilt: 50, //俯角
+  heading: 0, //倾斜 在两个帧之间产生旋转镜头的作用
+  percentage: 0 //帧 0-1
+}, ]
+var opts = {
+  delay: 1000,
+  duration: 3000,
+  interation: 'INFINITE'
+}
+var animation = new BMapGL.ViewAnimation(keyFrames, opts)
+// map.startViewAnimation(animation)
+// map.cancelViewAnimation(animation)
+```
+
+轨迹动画, 点之间的动画，自动控制
+
+``` js
+var points = [
+  new BMapGL.Point(116.418038, 39.91979),
+  new BMapGL.Point(116.418267, 40.059246),
+  new BMapGL.Point(116.307899, 40.057038)
+]
+var lines = new BMapGL.Polyline(points)
+var opts = {
+  delay: 1000,
+  duration: 20000,
+  tilt: 30, // 轨迹播放的角度，默认为55
+  overallView: true // 动画完成后自动调整视野到总览
+}
+var trackAnimation = new BMapGLLib.TrackAnimation(map, lines, opts)
+trackAnimation.start()
+```
+
+#### 可视化
+
+mapv 
+
+``` js
+<
+script src = "https://mapv.baidu.com/build/mapv.js" > < /script> <
+  script src = "https://code.bdstatic.com/npm/mapvgl@1.0.0-beta.54/dist/mapvgl.min.js" > < /script>
+//1.准备数据源
+//mapv方法 根据城市名，获取到城市的经纬度坐标
+var cityCenter = mapv.utilCityCenter.getCenterByCityName(cities[parseInt(Math.random() * cities.length)])
+data.push({
+  //地理信息，位置坐标
+  geometry: {
+    type: 'Point',
+    coordinates: [cityCenter.lngcityCenter.lat]
+  },
+  properties: {
+    sales: Math.random() * 100
+  }
+})
+// 绘制
+// 1.生成mapvgl 视图 View 这些图并不是直接生成在map地图上，另外有个图层 
+var view = new mapvgl.View({
+  map
+})
+// 2.初始化 Intensity 对象 控制绘制的点的颜色 大小
+var intensity = new mapvgl.Intensity({
+  min: 0, // 当前data数据的最大值
+  max: 100, // 当前data数据的最小值
+  minSize: 5, // 想要的点的最小值
+  maxSize: 30, // 想要的点的最大值
+  gradient: { // 颜色的渐变
+    0: 'rgb(25, 66, 102, 0.8)',
+    0.3: 'rgb(145, 102, 129, 0.8)',
+    0.7: 'rgb(210, 131, 137, 0.8)',
+    1: 'rgb(248, 177, 149, 0.8)'
+  }
+})
+// 3.初始化 mapvgl的PointLayer对象 散点 
+var pointLayer = new mapvgl.PointLayer({
+  //根据value值 绘制大小颜色不一样的点
+  size: function(data) {
+    return intensity.getSize(data.properties.sales)
+  },
+  color: function(data) {
+    return intensity.getColor(data.properties.sales)
+  }
+})
+// 4.将PointLayer对象加入View对象中
+view.addLayer(pointLayer)
+// 5.将data与PointLayer对象绑定
+pointLayer.setData(data)
+}
+```
